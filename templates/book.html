@@ -1,42 +1,12 @@
 <html>
 <head>
 <style type="text/css">
-body{
-background-color: #000;
-font-family: Arial;
-}
+body{background-color: #000; font-family: Arial;}
 .close{color: #0ff; font-size: 20pt; font-weight: bolder; cursor: hand}
 #caption{color: #0ff; font-size: 12pt; margin: auto; text-align: center;}
-.rainbow {
-  background-image: -webkit-gradient( linear, left top, right top, color-stop(0, #f22), color-stop(0.15, #f2f), color-stop(0.3, #22f), color-stop(0.45, #2ff), color-stop(0.6, #2f2),color-stop(0.75, #2f2), color-stop(0.9, #ff2), color-stop(1, #f22) );
-  background-image: gradient( linear, left top, right top, color-stop(0, #f22), color-stop(0.15, #f2f), color-stop(0.3, #22f), color-stop(0.45, #2ff), color-stop(0.6, #2f2),color-stop(0.75, #2f2), color-stop(0.9, #ff2), color-stop(1, #f22) );
-  color:transparent;
-  -webkit-background-clip: text;
-  background-clip: text;
-}
-/* The Modal (background) */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1; /* Sit on top */
-    top: 0;
-    height: 100%; /* Full height */
-    width: 100%;
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgb(0,0,0); /* Fallback color */
-    background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
-}
-
-/* Modal Content (Image) */
-.modal-content {
-    margin: auto;
-    display: block;
-    width: 100%;
-    max-width: 1200px;
-}
 .thumb:hover{opacity: 0.7;}
-
 </style>
+<link rel="stylesheet" href="/static/default/default.css">
 <script src="/static/jquery-3.1.1.min.js"></script>
 <script type="text/javascript">
 function handleClick(alt, image, caption){
@@ -58,8 +28,11 @@ function hideViewer(){
 <div id="viewer" class="modal"><img class="modal-content" id="img" onclick="hideViewer()">
     <div id="caption"></div>
 </div>
-
+{% if repr_image %}
 <img src="{{ repr_image }}">
+{% else %}
+<img src="/static/default/images/potofgold.png">
+{% endif %}
 <br/>
 {% for image_link in image_links %}
   <a href="javascript:handleClick('{{ image_link['alt'] }}',
