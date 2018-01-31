@@ -1,7 +1,7 @@
 <html>
 <head>
 <style type="text/css">
-body{background-color: #000; font-family: Arial;}
+body{background-color: #000; font-family: Arial; margin: 20px;}
 .close{color: #0ff; font-size: 20pt; font-weight: bolder; cursor: hand}
 #caption{color: #0ff; font-size: 12pt; margin: auto; text-align: center;}
 .thumb:hover{opacity: 0.7;}
@@ -31,7 +31,14 @@ function hideViewer(){
 {% if repr_image %}
 <img src="{{ repr_image }}">
 {% else %}
-<img src="/static/default/images/potofgold.png">
+<br/>
+<br/>
+<center>
+<img src="/static/default/images/potofgold.png" style="display:inline-block">
+<div class="speech-bubble" style="width:200px;display:inline-block">
+    <span>The potato sack with a question mark said,<br>"What you requested does not yet exist!"</span>
+</div>
+</center>
 {% endif %}
 <br/>
 {% for image_link in image_links %}

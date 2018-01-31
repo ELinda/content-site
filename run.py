@@ -9,11 +9,20 @@ STATIC = 'static/'
 
 @app.route('/')
 def glue_page():
-    return 'This is the glue page'
+    notebooks = get_all_notebooks()
+    return render_template('everything.html', notebooks=notebooks)
 
-@app.route('/')
 def get_all_notebooks():
-    return glob.glob(os.path.join(os.getcwd(), '%snotebooks/*' % STATIC))
+    relative_paths = glob.glob('%snotebooks/*' % STATIC)
+    book_names = [''.join(rp.split('/')[-1]) for rp in relative_paths]
+    book_urls = [url_for('.get_notebook', book=book) for book in book_names]
+    date_paths = [os.path.join(rp, 'date') for rp in relative_paths]
+    dates = []
+    for date_path in date_paths:
+        with open(date_path, 'rb') as datefile:
+            dates.append(datefile.read().strip())
+    zipped = sorted(zip(book_urls, book_names, dates), key=lambda x: x[2])
+    return [{'book_url': z[0], 'name': z[1], 'date': z[2]} for z in zipped]
 
 def static_url_from_relative(relative_path):
     return url_for('static', filename=relative_path.replace(STATIC, ''))

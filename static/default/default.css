@@ -11,12 +11,14 @@
     position: relative;
     background: #00aabb;
     border-radius: .4em;
+    padding: 10px;
+    vertical-align: top;
 }
 
 .speech-bubble:after {
     content: '';
     position: absolute;
-    bottom: 0;
+    bottom: 3;
     left: 50%;
     width: 0;
     height: 0;
