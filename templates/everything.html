@@ -1,7 +1,7 @@
 <html>
 <head>
 <style type="text/css">
-body{background-color: #000; color: #fff; font-family: Arial; margin: 20px;}
+body{background-color: #000; text-align:center;color: #fff; font-family: Arial; margin: 20px;}
 a {
     color: #fff; text-decoration:  none; font-weight: bold;
 }
@@ -13,8 +13,10 @@ a:hover {
 }
 </style>
 <link rel="stylesheet" href="/static/default/default.css">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 </head>
 <body onload="">
+
 <h2>Notebooks</h2>
 {% for notebook in notebooks %}
   <a href="{{ notebook['book_url'] }}" alt="{{ notebook['date'] }}">
