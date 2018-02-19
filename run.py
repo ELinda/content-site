@@ -1,26 +1,36 @@
 from flask import Flask
 from flask import render_template
+from flask import redirect
 from flask import url_for
 import os
 import glob
 
-app = Flask(__name__)
 STATIC = 'static/'
+app = Flask(__name__)
 
 @app.route('/')
 def glue_page():
     notebooks = get_all_notebooks()
-    return render_template('everything.html', notebooks=notebooks)
+    webpages = get_all_webpages()
+    return render_template('everything.html', notebooks=notebooks, webpages=webpages)
+
+def get_dates(relative_paths):
+    date_paths = [os.path.join(rp, 'date') for rp in relative_paths]
+    dates = []
+    for date_path in date_paths:
+        try:
+            with open(date_path, 'rb') as datefile:
+                dates.append(datefile.read().strip())
+        except Exception as e:
+            dates.append('')
+    return dates
+
 
 def get_all_notebooks():
     relative_paths = glob.glob('%snotebooks/*' % STATIC)
     book_names = [''.join(rp.split('/')[-1]) for rp in relative_paths]
     book_urls = [url_for('.get_notebook', book=book) for book in book_names]
-    date_paths = [os.path.join(rp, 'date') for rp in relative_paths]
-    dates = []
-    for date_path in date_paths:
-        with open(date_path, 'rb') as datefile:
-            dates.append(datefile.read().strip())
+    dates = get_dates(relative_paths)
     zipped = sorted(zip(book_urls, book_names, dates), key=lambda x: x[2])
     return [{'book_url': z[0], 'name': z[1], 'date': z[2]} for z in zipped]
 
@@ -45,6 +55,25 @@ def get_all_image_links(notebook_name):
                'image': images.get(k), 'caption': captions.get(k)}
               for k in thumbs]
     return merged
+
+# static webpages
+def get_all_webpages():
+    relative_paths = glob.glob('%swebpages/*' % STATIC)
+    page_names = [''.join(rp.split('/')[-1]) for rp in relative_paths]
+    page_urls = [url_for('.get_webpage', page=page) for page in page_names]
+    dates = get_dates(relative_paths)
+    zipped = sorted(zip(page_urls, page_names, dates), key=lambda x: x[2])
+    return [{'page_url': z[0], 'name': z[1], 'date': z[2]} for z in zipped]
+
+# https://stackoverflow.com/questions/20646822/how-to-serve-static-files-in-flask
+@app.route('/webpages/<page>')
+def get_webpage(page):
+    filename = 'webpages/%s/index.html' % (page)
+    # another way to do this which doesn't require changing all the paths in the files
+    # but makes the URLs longer
+    #actual_url = url_for('static', filename=filename)
+    #return redirect(actual_url)
+    return app.send_static_file(filename)
 
 @app.route('/notes/<book>')
 def get_notebook(book):

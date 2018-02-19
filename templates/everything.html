@@ -17,10 +17,20 @@ a:hover {
 </head>
 <body onload="">
 
+{% if notebooks %}
 <h2>Notebooks</h2>
+{% endif %}
 {% for notebook in notebooks %}
   <a href="{{ notebook['book_url'] }}" alt="{{ notebook['date'] }}">
     <h3>{{ notebook['name'] }}</h3>
+  </a>
+{% endfor %}
+{% if webpages %}
+<h2>Webpages</h2>
+{% endif %}
+{% for webpage in webpages %}
+  <a href="{{ webpage['page_url'] }}" alt="{{ webpage['date'] }}">
+    <h3>{{ webpage['name'] }}</h3>
   </a>
 {% endfor %}
 </body>
