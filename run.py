@@ -65,6 +65,19 @@ def get_all_webpages():
     zipped = sorted(zip(page_urls, page_names, dates), key=lambda x: x[2])
     return [{'page_url': z[0], 'name': z[1], 'date': z[2]} for z in zipped]
 
+
+def read_header(directory_and_pattern):
+    """read header files to insert into head tag"""
+    relative_paths = glob.glob('%s%s' % (STATIC, directory_and_pattern))
+    def try_read_file(path):
+        try:
+            with open(path, 'r') as f:
+                return '\n'.join(f.readlines())
+        except Exception:
+            return ''
+    header = ''
+    return '\n'.join([try_read_file(path) for path in relative_paths])
+
 # https://stackoverflow.com/questions/20646822/how-to-serve-static-files-in-flask
 @app.route('/webpages/<page>')
 def get_webpage(page):
@@ -82,7 +95,8 @@ def get_notebook(book):
                    glob.glob(os.path.join(base_path, '*.png'))]
     repr_image = repr_images[0] if repr_images and len(repr_images) else None
     image_links = get_all_image_links(book)
-    return render_template('book.html', repr_image=repr_image, image_links=image_links)
+    header = read_header('default/header*')
+    return render_template('book.html', repr_image=repr_image, image_links=image_links, header=header)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug = False)
