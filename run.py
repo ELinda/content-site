@@ -39,7 +39,7 @@ def static_url_from_relative(relative_path):
 
 def get_urls(paths):
     # short name -> path mapping
-    return dict([(os.path.basename(path).split('_')[0].split('.')[0],
+    return dict([(os.path.basename(path).rsplit('_thumb', 1)[0].split('.')[0],
                  static_url_from_relative(path))
                  for path in paths])
 
