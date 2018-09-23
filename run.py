@@ -12,7 +12,8 @@ app = Flask(__name__)
 def glue_page():
     notebooks = get_all_notebooks()
     webpages = get_all_webpages()
-    return render_template('everything.html', notebooks=notebooks, webpages=webpages)
+    header = read_header('default/header*')
+    return render_template('everything.html', notebooks=notebooks, webpages=webpages, header=header)
 
 def get_dates(relative_paths):
     date_paths = [os.path.join(rp, 'date') for rp in relative_paths]
