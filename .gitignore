@@ -1,0 +1,13 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# static content
+static/notebooks/*
+
+# static javascript libraries
+static/*.min.js
+
+# file system
+*.DS_Store

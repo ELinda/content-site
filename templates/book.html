@@ -1,0 +1,53 @@
+<html>
+<head>
+{{ header|safe }}
+<style type="text/css">
+body{background-color: #000; font-family: Arial; margin: 20px;}
+.close{color: #0ff; font-size: 20pt; font-weight: bolder; cursor: hand}
+#caption{color: #0ff; font-size: 12pt; margin: auto; text-align: center;}
+.thumb:hover{opacity: 0.7;}
+</style>
+<link rel="stylesheet" href="/static/default/default.css">
+<script src="/static/jquery-3.1.1.min.js"></script>
+<script type="text/javascript">
+function handleClick(alt, image, caption){
+    var viewer = $('#viewer');
+    viewer.find('#img').attr('src', image);
+    viewer.find('#img').attr('alt', alt);
+    viewer.find('#caption').html(caption);
+    viewer.css('display', 'block');
+}
+function hideViewer(){
+    var viewer = $('#viewer');
+    viewer.css('display', 'none');
+}
+
+</script>
+</head>
+<body onload="">
+<!--https://www.w3schools.com/howto/howto_css_modal_images.asp-->
+<div id="viewer" class="modal"><img class="modal-content" id="img" onclick="hideViewer()">
+    <div id="caption"></div>
+</div>
+{% if repr_image %}
+<img src="{{ repr_image }}">
+{% else %}
+<br/>
+<br/>
+<center>
+<img src="/static/default/images/potofgold.png" style="display:inline-block">
+<div class="speech-bubble" style="width:200px;display:inline-block">
+    <span>The potato sack with a question mark said,<br>"What you requested does not yet exist!"</span>
+</div>
+</center>
+{% endif %}
+<br/>
+{% for image_link in image_links %}
+  <a href="javascript:handleClick('{{ image_link['alt'] }}',
+                                  '{{ image_link['image'] }}',
+                                  '{{ image_link['caption'] }}')">
+    <img src="{{ image_link['thumb'] }}" class="thumb">
+  </a>
+{% endfor %}
+</body>
+</html>

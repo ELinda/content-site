@@ -1,0 +1,38 @@
+<html>
+<head>
+{{ header|safe }}
+<style type="text/css">
+body{background-color: #000; text-align:center;color: #fff; font-family: Arial; margin: 20px;}
+a {
+    color: #fff; text-decoration:  none; font-weight: bold;
+}
+a:visited {
+    color: #ddd;
+}
+a:hover {
+    color: #f44;
+}
+</style>
+<link rel="stylesheet" href="/static/default/default.css">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body onload="">
+
+{% if notebooks %}
+<h2>Notebooks</h2>
+{% endif %}
+{% for notebook in notebooks %}
+  <a href="{{ notebook['book_url'] }}" alt="{{ notebook['date'] }}">
+    <h3>{{ notebook['name'] }}</h3>
+  </a>
+{% endfor %}
+{% if webpages %}
+<h2>Webpages</h2>
+{% endif %}
+{% for webpage in webpages %}
+  <a href="{{ webpage['page_url'] }}" alt="{{ webpage['date'] }}">
+    <h3>{{ webpage['name'] }}</h3>
+  </a>
+{% endfor %}
+</body>
+</html>
