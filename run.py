@@ -8,6 +8,8 @@ import glob
 STATIC = 'static/'
 app = Flask(__name__)
 
+# test
+
 @app.route('/')
 def glue_page():
     notebooks = get_all_notebooks()
