@@ -4,6 +4,8 @@ from flask import redirect
 from flask import url_for
 import os
 import glob
+import json
+import logging
 
 STATIC = 'static/'
 app = Flask(__name__)
@@ -14,8 +16,9 @@ app = Flask(__name__)
 def glue_page():
     notebooks = get_all_notebooks()
     webpages = get_all_webpages()
+    articles = get_all_articles()
     header = read_header('default/header*')
-    return render_template('everything.html', notebooks=notebooks, webpages=webpages, header=header)
+    return render_template('everything.html', notebooks=notebooks, webpages=webpages, articles=articles, header=header)
 
 def get_dates(relative_paths):
     date_paths = [os.path.join(rp, 'date') for rp in relative_paths]
@@ -36,6 +39,19 @@ def get_all_notebooks():
     dates = get_dates(relative_paths)
     zipped = sorted(zip(book_urls, book_names, dates), key=lambda x: x[2])
     return [{'book_url': z[0], 'name': z[1], 'date': z[2]} for z in zipped]
+
+def get_all_articles():
+    try:
+        with open(f'{STATIC}articles/articles.json', 'r') as f:
+            articles = json.load(f)
+        # modify loaded object to contain page urls
+        for article in articles:
+            print(article)
+            article['page_url'] = url_for('.get_article', file=article['file'])
+        return articles
+    except Exception as e:
+        logging.warning("skipping articles", e)
+        return []
 
 def static_url_from_relative(relative_path):
     return url_for('static', filename=relative_path.replace(STATIC, ''))
@@ -82,7 +98,7 @@ def read_header(directory_and_pattern):
     return '\n'.join([try_read_file(path) for path in relative_paths])
 
 # https://stackoverflow.com/questions/20646822/how-to-serve-static-files-in-flask
-@app.route('/webpages/<page>')
+@app.route('/webpages/<page>.html')
 def get_webpage(page):
     filename = 'webpages/%s/index.html' % (page)
     # another way to do this which doesn't require changing all the paths in the files
@@ -91,7 +107,13 @@ def get_webpage(page):
     #return redirect(actual_url)
     return app.send_static_file(filename)
 
-@app.route('/notes/<book>')
+@app.route('/articles/<file>')
+def get_article(file):
+    file_path = 'articles/%s' % (file)
+    return app.send_static_file(file_path)
+
+
+@app.route('/notes/<book>.html')
 def get_notebook(book):
     base_path = os.path.join('%snotebooks/%s' % (STATIC, book))
     repr_images = [static_url_from_relative(path) for path in 

@@ -12,6 +12,7 @@ a:visited {
 a:hover {
     color: #f44;
 }
+span {font-family: Georgia}
 </style>
 <link rel="stylesheet" href="/static/default/default.css">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -32,6 +33,14 @@ a:hover {
 {% for webpage in webpages %}
   <a href="{{ webpage['page_url'] }}" alt="{{ webpage['date'] }}">
     <h3>{{ webpage['name'] }}</h3>
+  </a>
+{% endfor %}
+{% if articles %}
+<h2>Articles</h2>
+{% endif %}
+{% for article in articles %}
+  <a href="{{ article['page_url'] }}">
+    <h3>{{ article['title'] }} &nbsp; &nbsp;<span>{{article['date']}}</span></h3>
   </a>
 {% endfor %}
 </body>
