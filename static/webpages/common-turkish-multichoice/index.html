@@ -1,0 +1,154 @@
+﻿
+<html>
+<head>
+  <title>remember</title>
+   <script src="/static/jquery-3.1.1.min.js"></script>
+  <style type='text/css'>
+  body {
+    position: relative;
+    width: 100%;
+    display: block;
+	color:#33c;
+	font-family: consolas;
+  }
+
+  body > *  {
+    margin: auto;
+    width: 500px;
+    display: block;
+	font-size:30pt;
+	padding:10px;
+  }
+  #question{
+    font-weight:bold;
+	padding:10px;
+	text-align:center;
+  }
+  .incorrect,.correct{
+	text-align:center;
+	cursor:default;
+  }
+  .clicked{
+	color:#ccc;
+  }
+  .clickedright{
+    color:#2C2;	
+  }
+  </style>
+  <script>
+  var nouns = [['kedi','cat'], ['kutu','box'], ['sokak','street'], ['adam','man'], ['ev','home'],
+		    ['muz','banana'],['havuç','carrot'], ['enginar','artichoke'], ['hıyar','cucumber'],
+			['sarımsak','garlic']];
+  var verbs = [['seyretmek','to watch'], ['gitmek','to go'], ['olmak','to become'], 
+			['sevmek','to like'], ['gelmek','to come'],
+		    ['almak','to get'],['yemek','to eat'], ['okumak','to read'], 
+			['yazmak','to write'],['konuşmak','to speak']];
+  var suffix = [['-ma, -me','negation'],['-(i/u)yorum','present first person singular'],
+				['-(i/u/ü)yoruz','present first person plural'],['-(i/u/ü)yor','present third person singular'],
+				['-c(a/e)ğım','future first person singular']]
+  var q = [nouns, verbs, suffix];
+  
+  
+  function flip_quest(quest){
+    new_q = []
+	new_q[0] = quest[1];
+	new_q[1] = quest[0];
+	
+	return new_q;
+  }
+  function get_selected(){
+	var flip = Math.random() > 0.5 ? true : false; 
+    var q_cat = q[Math.floor(q.length*Math.random())];
+	var selected = new Array(q_cat.length);
+	var q_response = {};
+	var count = 0; 
+	
+	var quest =  q_cat[Math.floor(q_cat.length*Math.random())];
+	if (flip){ 
+	  quest = flip_quest(quest);
+	}
+	q_response.quest = quest;
+	d = quest;
+	q_response.addt_a = [];
+
+	for(var i=0; i<14; ++i){
+		var rand = Math.floor(q_cat.length*Math.random());
+		var select_pair = q_cat[rand];
+		var select_val = flip ? select_pair[0] : select_pair[1];
+		
+		if (selected[rand] == undefined && select_val != q_response.quest[1]){
+			selected[rand] = 1; 
+			q_response.addt_a.push(select_val);
+			count += 1; 
+		}
+		if (count >= 3)
+			return q_response; 
+	}
+	return q_response;
+  }
+  function wrong(e){
+    e.classList.add("clicked");
+  }
+  function right(e){
+    e.classList.add("clickedright");
+    setTimeout(function() {
+	  $("#disp").html('');
+	  ask(get_selected());
+	}, 300);
+  }
+  function HTMLEncode(str){
+	var i = str.length,
+      aRet = [];
+
+	while (i--) {
+	  var iC = str[i].charCodeAt();
+	  if (iC < 65 || iC > 127 || (iC>90 && iC<97)) {
+		aRet[i] = '&#'+iC+';';
+	  } else {
+		aRet[i] = str[i];
+	  }
+	}
+	return aRet.join('');    
+  }
+  function get_option(type,content){
+	  if (type == 'correct-answer'){
+		tag = "<div class = 'correct' onclick='right(this)'>";
+	  }else if(type == 'incorrect-answer'){
+		tag = "<div class = 'incorrect' onclick='wrong(this)'>";
+	  }
+	  if (type == 'question'){
+		tag = "<div id = 'question'>";
+	  }
+	  var closetag = '</div>'
+	  var innerHTML = tag + HTMLEncode(content) + closetag;
+	  return innerHTML;
+  }
+  function add_elt(elt){
+    elt.onclick = 'right(this)';
+	$("#disp").append(elt);
+  }
+  function ask(sel){
+	console.log(sel.quest);
+	add_elt(get_option('question',sel.quest[0]));
+	var correct_index = Math.floor(Math.random()*(sel.addt_a.length+1));
+	console.log(correct_index);
+	for(var i = 0; i < sel.addt_a.length; ++i) {
+	  if (correct_index == i){
+		add_elt(get_option('correct-answer',sel.quest[1]));
+	  }
+	  add_elt(get_option('incorrect-answer',sel.addt_a[i]));
+    }
+	if (correct_index == sel.addt_a.length){
+	  add_elt(get_option('correct-answer',sel.quest[1]));
+	}
+  }
+  $(document).ready(function() {
+	ask(get_selected());
+  });
+  var a = get_selected();
+  </script>
+</head>
+<body>
+<div id="disp"></div>
+</body>
+</html>

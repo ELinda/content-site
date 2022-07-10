@@ -1,0 +1,154 @@
+
+<html>
+<head>
+  <title>interests</title>
+  
+  
+  <style type='text/css'>
+    body {
+		background-color:#e71c8f;
+		margin: 20px 100px 20px 100px;
+		padding: 0px;
+		color:#33c;
+		font-family: consolas;
+    }
+    .slide{
+		border:1px dotted #777;
+		background-color:#fff;
+		height:80%;
+    }
+    #pg{
+ 		width:130px;
+		position:relative;
+		top:-40px;left:5px;
+		padding:10px;
+ 		background-color:#fab;
+		color:#fff;
+		font-weight:bold;
+		font-size:15px;
+		border:1px dotted #f99;
+    }
+    .control{
+		text-align:center;	
+    }
+    input,button{
+		background-color:#eee;
+		color:#00a;
+		font-size:8px;
+		border:1px solid #fff;
+    }
+  </style>
+  
+
+<script src="/static/jquery-3.1.1.min.js"></script>
+
+<script type='text/javascript'>
+var base_dir = '/static/webpages/interests-from-2014/'
+var gettingSetting = null; 
+var m_ids = ["m1","m2","m3","m4","m5","m6","m7","m8","m9"];
+var more_interests = ["hydroponics","web design","farming","agriculture","business","macroeconomics","capital markets","hygiene",
+					  "special education","space","karyoke","socks","bikinis","spies","cloud formation","creating art and soup from seaweed",
+					  "acrylic painting","sky diving, but only a meter","fashion","statistics","doors","classic novels","civet coffee","tea",
+					  "aeronautical engineering","bloody marys","visuospatial processing","board games","lamb burgers","stir fry","sabotage",
+					  "partying with the party","comedies","tragedies","dub step","choose your own sadventure","Hawaiian shirts","ethics",
+					  "natural language processing","Punderdome 3000","Dragonball Z","symbology","linguistics","why is Captain Planet blue?",
+					  "sequences and series of functions","detached hands","arboreal beasts","financial regulation","Matt Damon","risk management",
+					  "abnormal psychology","Step Up","difference engine","is this really happening right now?","snowmageddon","shockumentaries",
+					  "reality","autonomous car decals","Tron soundtrack","duvet covers","OxiClean","$1 food poisoning happy hour","vim commands",
+					  "lacto-fermented foods","nutrition","getting to sleep on time","voting systems","Canada","Wild China","flavorites",
+					  "2D printing","jewelry","sketching","going to the beach","weak AI","honey badger","Powerthirst","security"];
+
+function clear(context,x,y,w,h){
+	context.fillStyle="#ffffff";
+	context.fillRect(x,y,w,h);
+}
+function getRandElt(array){
+	return array.length==0 ? null : array[Math.floor(Math.random()*array.length)];
+}
+function randAboveMin(min,randFactor){
+	return min + Math.ceil(Math.random()*randFactor);
+}
+function initial(){
+	$("#prev").mouseout(function(){if (parseInt($("#pg").html(), 10) > 1) $("#prev").attr("src", base_dir + "prev.png"); else $("#prev").attr("src", base_dir + "prev_des.png");});
+	$("#next").mouseout(function(){if (more_interests.length > 0) $("#next").attr("src", base_dir + "next.png");});
+	$("#prev").mouseover(function(){if (parseInt($("#pg").html(), 10) > 1) $("#prev").attr("src", base_dir + "prev_over.png");});
+	$("#next").mouseover(function(){if (more_interests.length > 0) $("#next").attr("src", base_dir + "next_over.png");});
+	
+	var m_direction = ["left","right"];
+	var m_fontfamily = ["Courier New", "Arial", "Trebuchet", "Times New Roman", "Helvetica", "Impact", "Comic Sans MS"];
+	for(var i = 0; i< m_ids.length; ++i){
+		$("#"+m_ids[i]).attr("scrollamount",randAboveMin(3,15));
+		$("#"+m_ids[i]).css("color","rgb("+randAboveMin(200,55)+","+randAboveMin(100,55)+","+randAboveMin(100,85)+")");
+		$("#"+m_ids[i]).css("font-size",""+Math.ceil(15*Math.random()+17)+"px");
+		$("#"+m_ids[i]).css("font-family",m_fontfamily[Math.floor(Math.random()*m_fontfamily.length)]);
+		$("#"+m_ids[i]).attr("direction",m_direction[Math.floor(Math.random()*m_direction.length)]);
+		$("#"+m_ids[i]).css("padding",randAboveMin(5,10)+"px 0px 0px 0px");
+	}
+	
+	$("#prev").attr("src", base_dir + "prev_des.png");
+}
+
+function prev(){
+	if (parseInt($("#pg").html(), 10) === 1){
+		$("#prev").attr("src", base_dir + "prev_des.png");
+		return;
+	}
+	var updated = false;
+	for(var i = 0; i< m_ids.length; ++i){
+		var interests = $("#"+m_ids[i]).html(); 
+		var zwnj_i = interests.indexOf("\u200C");
+		more_interests.push(interests.substring(0,zwnj_i));
+		$("#"+m_ids[i]).html(interests.substring(zwnj_i+1));
+		updated = true;
+	}
+	
+	if (updated){
+		$("#next").attr("src", base_dir + "next.png");
+		$("#pg").html(parseInt($("#pg").html(), 10)-1);
+	}
+}
+function next(){
+	var updated = false;
+	
+	for(var i = 0; i< m_ids.length && more_interests.length > 0; ++i){
+		var j = Math.floor(more_interests.length*Math.random());
+		$("#"+m_ids[i]).append("&zwnj; "+more_interests[j]);
+		more_interests.splice(j,1);
+		updated = true;
+		$("#"+m_ids[i]).attr("direction", $("#"+m_ids[i]).attr("direction") == "left" ? "right" : "left");
+	}
+	
+	if (updated){
+		$("#pg").html(parseInt($("#pg").html(), 10)+1);
+		$("#prev").attr("src", base_dir + "prev.png");
+	}
+	
+	if (more_interests.length == 0)
+		$("#next").attr("src", base_dir + "next_des.png");
+}
+</script>
+
+
+</head>
+<body onload='initial()'>
+  
+    <div class="slide" id="mainDiv"><marquee id="m1">writing</marquee>
+	<marquee id="m2">jeggings</marquee>
+	<marquee id="m3">furniture</marquee>
+	<marquee id="m4">pink web pages</marquee>
+	<marquee id="m5">animal husbandry</marquee>
+	<marquee id="m6">HTML marquees</marquee>
+	<marquee id="m7">neuroscience</marquee>
+	<marquee id="m8">math/meth</marquee>
+	<marquee id="m9">water spinach omelettes</marquee></div>
+	<br />
+	<div class="control"><a href="javascript:prev();"><img id="prev" src="/static/webpages/interests-from-2014/prev.png" alt="previous"/></a><span id="pg">1</span>
+					     <a href="javascript:next();"><img id="next" src="/static/webpages/interests-from-2014/next.png" alt="next"	/></a></div>
+
+
+</body>
+
+
+</html>
+
+

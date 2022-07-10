@@ -1,0 +1,401 @@
+
+<html>
+<head>
+  <title>draw</title>
+  
+  
+  <style type='text/css'>
+	body {
+		background-color:#fff;
+		margin: 0px;
+		padding: 0px;
+		color:#33c;
+		font-family: consolas;
+	}
+    .mini,.mini2{
+		margin-left:10px;
+		margin-top:10px;
+		border:1px dotted #777;
+        float:left;
+        background-color:#fff;
+        font-size:.3em;
+    }
+    .mini{
+        width:130px;
+        padding:10px; 
+        background-color:#fff;
+    }
+    .mini2{
+        width:820px; 
+    }
+	#colorsCanvas{
+        float:left;
+	}
+	#myCanvas{
+        margin:10px;
+        float:left;
+	}
+	input,button{
+		background-color:#eee;
+		color:#00a;
+        font-size:8px;
+        border:1px solid #fff;
+	}
+  </style>
+  
+
+<script src="/static/jquery-3.1.1.min.js"></script>
+
+<script type='text/javascript'>
+var gettingSetting = null; 
+
+function clear(context,x,y,w,h){
+	context.fillStyle="#ffffff";
+	context.fillRect(x,y,w,h);
+}
+
+
+function getSelectedColorSetting(x,y,colorSettingsLoc){
+    for(var i  = 0; i<colorSettingsLoc.length; ++i){
+        var x0 = colorSettingsLoc[i].x; 
+        var y0 = colorSettingsLoc[i].y; 
+        var x1 = x0+colorSettingsLoc[i].w; 
+        var y1 = y0+colorSettingsLoc[i].h; 
+        if (x>=x0 && x<=x1 && y>=y0 && y<=y1) {
+            return colorSettingsLoc[i];
+        }
+    }
+    return null;//none overlapped
+}
+
+// a bit different from the input ranges, domain must be: 
+// H in [0,6], s in [0,1], v in [0,1]
+function Hsv2RGB(H,s,v){
+	var c = s*v;
+	var x = c * (1 - Math.abs(H%2 -1));
+	var m = v-c; 
+	r = (((H>=0&&H<1)||(H>=5&&H<6) ? c : (H>=1&&H<2)||(H>=4&&H<5) ? x : 0)+m)*255;
+	g = (((H>=1&&H<2)||(H>=2&&H<3) ? c : (H>=0&&H<1)||(H>=3&&H<4) ? x : 0)+m)*255;
+	b = (((H>=3&&H<4)||(H>=4&&H<5) ? c : (H>=2&&H<3)||(H>=5&&H<6) ? x : 0)+m)*255;
+	return {r:r,g:g,b:b};
+}
+
+function drawColorSetting(ctx,colorSetting){
+    var S = colorSetting;
+    var n = colorSetting.name; 
+    var n2 = colorSetting.name; 
+	var imgData = ctx.createImageData(S.w,S.h);
+	var max_x = colorSetting.max; 
+    var rgb={r:0,g:0,b:0};
+	//color the bar 
+    for (var j = 0; j < S.w; ++j){
+		if (n == "r" || n == "g" || n == "b"){
+			rgb.r = n=="r" ? 255*(j/S.w): parseInt($("#r_val")[0].value);
+			rgb.g = n=="g" ? 255*(j/S.w): parseInt($("#g_val")[0].value);
+			rgb.b = n=="b" ? 255*(j/S.w): parseInt($("#b_val")[0].value);
+		}else{ 
+			var v = n=="v" ? j/S.w : parseInt($("#v_val")[0].value)/100; 
+			var s = n=="s" ? j/S.w : parseInt($("#s_val")[0].value)/100; 
+			var H = n=="h" ? j/S.w*6 : parseInt($("#h_val")[0].value)/60; 
+			var rgb = Hsv2RGB(H,s,v);
+		}
+        for (var i = 0; i < S.h; ++i){
+            var pix_index = (S.w*i + j)*4; 
+            imgData.data[pix_index] = Math.floor(rgb.r);
+            imgData.data[pix_index+1] = Math.floor(rgb.g);
+            imgData.data[pix_index+2] = Math.floor(rgb.b);
+            imgData.data[pix_index+3] = 255;   
+        }
+    }
+    
+    //draw the two-triangle dial
+    var dw = Math.floor(S.h/2)*2; //dial's width
+    var colorInput = n=="r" ? $("#r_val")[0] : (n=="g" ? $("#g_val")[0] : (n=="b" ? $("#b_val")[0] : 
+						(n=="h" ? $("#h_val")[0] : (n=="s" ? $("#s_val")[0] : (n=="v" ? $("#v_val")[0] : null)))));
+    var dialCenter = Math.floor(parseInt(colorInput.value)/max_x*S.w);
+	
+    for (var i = (dialCenter >= 0 ? 0 : S.h); i < S.h; ++i){
+        for (var j = dialCenter-Math.abs(i-dw/2)+1; j < dialCenter+Math.abs(i-dw/2)-1; ++j){
+            if (j<0) continue;
+            if (j>=S.w) break;
+            var pix_index = (S.w*i + j)*4; 
+            imgData.data[pix_index] = i > dw/2 ? 255 :0;
+            imgData.data[pix_index+1] = i > dw/2 ? 255 :0;
+            imgData.data[pix_index+2] = i > dw/2   ? 255 :0;  
+            imgData.data[pix_index+3] = 255;   
+        }
+    }
+	
+	ctx.putImageData(imgData,S.x,S.y);
+}
+
+function positionInput(colorSetting){
+    var parOffset=$( "#colorSetDiv" ).offset();
+    //assuming that top and left padding are the same!
+    var padding=parseInt($( "#colorSetDiv" ).css('padding-top')); 
+    var colSettingInput = $("#"+colorSetting.inp);
+    colSettingInput.css({
+        position:'absolute',
+        top: parOffset.top+colorSetting.y+padding,
+        left: parOffset.left+colorSetting.w+padding,
+        zIndex:5000
+        });
+}
+
+//draw the swatch thing above the color dials
+function drawCurrentColor(ctx,center_x,center_y) {
+    var w = 40;
+    var h = 40;
+    var radius = w/2;
+	var imgData = ctx.createImageData(w,h);
+	
+    var r = parseInt($("#r_val")[0].value); 
+    var g = parseInt($("#g_val")[0].value); 
+    var b = parseInt($("#b_val")[0].value);
+    
+    for (var j = 0; j < w; j += 1){
+        for (var i = 0; i < h; i += 1){
+            var pix_index = (w*i + j)*4; 
+            imgData.data[pix_index] = r;
+            imgData.data[pix_index+1] = g;
+            imgData.data[pix_index+2] = b;
+            imgData.data[pix_index+3] = 255-Math.pow(Math.sqrt((j-w/2)*(j-w/2)+(i-h/2)*(i-h/2))/radius,4)*255;//transparent outside of radius   
+        }
+    }
+    
+    clear(ctx,center_x-w/2,center_y-h/2,w,h);
+	ctx.putImageData(imgData,center_x-w/2,center_y-h/2);
+}
+
+function drawColorSettings(ctx,colorSettingsLoc,max_x){
+    for(var i=0; i<colorSettingsLoc.length;++i){
+        drawColorSetting(ctx,colorSettingsLoc[i],max_x);  
+    }
+    drawCurrentColor(ctx,50,20);
+}
+function RGB2HSV(){
+    var r = parseInt($("#r_val")[0].value); 
+    var g = parseInt($("#g_val")[0].value); 
+    var b = parseInt($("#b_val")[0].value);
+	var c = Math.max(r,g,b) - Math.min(r,g,b);
+	var M = Math.max(r,g,b); 
+	var h = 60*((r>=g && r>=b) ? ((g-b)/c+6)%6 : (g>=r && g>=b) ? (b-r)/c+2 : (r-g)/c+4);
+	var s = (v==0 ? 0 : c/M)*100;
+	var v = M/255*100;
+	return {h:h,s:s,v:v};
+}
+
+// R,G,and B are independent, and H,S, and V are independent
+// But each of the triples depends on the other
+// so when the user updates one triple, the other must be auto-updated
+function updateDependentColorSettings(colorSettingName){
+	var n = colorSettingName;
+	if (n == "r" || n == "g" || n == "b"){
+		var hsv = RGB2HSV(); 
+		$("#h_val")[0].value = Math.floor(hsv.h);  
+		$("#s_val")[0].value = Math.floor(hsv.s);  
+		$("#v_val")[0].value = Math.floor(hsv.v);
+	}else if (n == "h" || n == "s" || n == "v"){
+		var v = parseInt($("#v_val")[0].value)/100; 
+		var s = parseInt($("#s_val")[0].value)/100; 
+		var H = parseInt($("#h_val")[0].value)/60; 
+		var rgb = Hsv2RGB(H,s,v);
+		$("#r_val")[0].value = Math.floor(rgb.r);  
+		$("#g_val")[0].value = Math.floor(rgb.g);  
+		$("#b_val")[0].value = Math.floor(rgb.b);
+	}
+}
+
+// user has selected a color setting to update; draw updated configuration
+function applyColorSetting(x,min_x,currSetting,colorSettingsLoc,ctx){
+    if (currSetting == null) {
+        return; 
+    }
+	var max_x = currSetting.max;
+    x = x*max_x/currSetting.w; 
+    if (x<min_x) x=min_x;
+    if (x>max_x) x=max_x; 
+    $("#"+currSetting.inp)[0].value = Math.floor(x); //display updated value
+    //cons.innerHTML = x+", "+max_x;
+	updateDependentColorSettings(currSetting.name);
+    
+    drawColorSettings(ctx,colorSettingsLoc,max_x);
+    populateHexColorValue();
+}
+
+//using the canvas, mouse info, and color settings locations, return relative offset and type of setting to update
+function getSelectedOffsetAndColorSetting(canvas,e,colorSettingsLoc) {
+    var offset = canvas.offset();
+    
+    //get info from mouse event
+    var x = e.pageX - offset.left;
+    var currSetting = getSelectedColorSetting(e.pageX - offset.left,e.pageY - offset.top,colorSettingsLoc);
+    
+    return {offset:offset,setting:currSetting};
+}
+
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function populateHexColorValue(){
+    var r = parseInt($("#r_val")[0].value);
+    var g = parseInt($("#g_val")[0].value);
+    var b = parseInt($("#b_val")[0].value);
+    $("#hexColor")[0].value = '' + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+function clearCanvas(canvas) {
+    var ctx = canvas.getContext('2d');
+	ctx.fillStyle="#ffffff";
+	ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function initial(){
+    
+	var canvas = $("#colorsCanvas")[0];
+	var context = canvas.getContext('2d');
+    
+    var dialsStart = 60;
+    //should be, pretend a color was chosen to "0" and draw all colors
+    var colorSettingsLoc = [{name:"r",x:0,y:dialsStart,w:100,h:10,inp:"r_val",max:255},
+                            {name:"g",x:0,y:dialsStart+20,w:100,h:10,inp:"g_val",max:255},
+                            {name:"b",x:0,y:dialsStart+40,w:100,h:10,inp:"b_val",max:255},
+                            {name:"h",x:0,y:dialsStart+60,w:100,h:10,inp:"h_val",max:360},
+                            {name:"s",x:0,y:dialsStart+80,w:100,h:10,inp:"s_val",max:100},
+                            {name:"v",x:0,y:dialsStart+100,w:100,h:10,inp:"v_val",max:100}];
+    drawColorSettings(context,colorSettingsLoc);
+    
+    //text inputs right of each color setting
+    for(var i=0; i<colorSettingsLoc.length; ++i){
+        positionInput(colorSettingsLoc[i]);
+    }
+    
+    $( "#colorsCanvas" ).mousedown(function(e){
+        var offsetSetting = getSelectedOffsetAndColorSetting($(this), e, colorSettingsLoc);
+        $(document).mousemove(function(event) {
+            applyColorSetting(event.pageX - offsetSetting.offset.left,0,offsetSetting.setting,colorSettingsLoc,context);
+            });
+    });
+    $( "#colorsCanvas" ).click(function(e){
+        var offsetSetting = getSelectedOffsetAndColorSetting($(this), e, colorSettingsLoc);
+        //add option here to trigger saving "important colors"?
+        applyColorSetting(e.pageX - offsetSetting.offset.left,0,offsetSetting.setting,colorSettingsLoc,context);
+    });
+    
+    clearCanvas($( "#myCanvas" )[0]);
+    
+      
+    $( "#myCanvas" ).click(function(e){
+        var paintWithMouse = getPaintFunction($( "#myCanvas" ));  
+        paintWithMouse(e,0);
+    });
+    $( "#myCanvas" ).mousedown(function(e){
+        var paintWithMouse = getPaintFunction($( "#myCanvas" )); 
+        $(document).mousemove(function(event) {
+            paintWithMouse(event,0);
+        });
+    });
+    $(document).mouseup(function(e){
+        $(document).unbind("mousemove");    
+    });
+    $( "#smallSize" ).click(function(e){
+        $("#brushSize")[0].value = 12; 
+    });
+    $( "#medSize" ).click(function(e){
+        $("#brushSize")[0].value = 30; 
+    });
+    $( "#largeSize" ).click(function(e){
+        $("#brushSize")[0].value = 50; 
+    });
+    
+}
+
+
+//closure to store some data while painting
+function getPaintFunction(canvas) {
+    var ctx = canvas[0].getContext('2d');
+    var offset = canvas.offset();
+    var last_x=-1, last_y=-1;
+    var dest_x=-1, dest_y=-1;
+    var r = parseInt($("#r_val")[0].value);
+    var g = parseInt($("#g_val")[0].value);
+    var b = parseInt($("#b_val")[0].value);
+    var w = Math.floor(parseInt($("#brushSize")[0].value)/2)*2; 
+    
+    return function paint(e,k){
+        //get info from mouse event and variables
+        //rw stuff not working! 
+        var rw =((last_x&last_y&dest_x&dest_y)>=0 && k>0 && dest_x!=e.pageX && last_x!=e.pageX )  ?
+                  Math.floor((Math.abs(Math.abs(last_x-e.pageX)-Math.abs(e.pageX-dest_x))/Math.abs(dest_x-last_x))*w/2)*2 : w;
+        rw = rw > w*.7 ? rw : Math.floor(w*.7/2)*2;
+        rw = rw > 0 ? rw : 2; 
+        var radius = rw/2;
+        var x = e.pageX - Math.floor(offset.left) - radius;
+        var y = e.pageY - Math.floor(offset.top) - radius;
+        
+        /*
+        if ((last_x&last_y&dest_x&dest_y)>=0 && k>0 && dest_x!=e.pageX && last_x!=e.pageX)  {
+            cons.innerHTML += k+':'+e.pageX+'->'+last_x+','+ dest_x+'   '+rw+'<BR>';
+        }
+        */
+        
+        
+        //interpolation... the crappy kind 
+        var delta_x = Math.abs(e.pageX-last_x); 
+        var delta_y = Math.abs(e.pageY-last_y);
+        var max_delta = 1 > w/4 ? 1 : w/4;   //max distance you'd want btwn two blobs
+        if (k<100&& (last_x&last_y)>=0 && (delta_x > max_delta || delta_y > max_delta)){
+            if (k==0) {
+                dest_x = e.pageX;
+                dest_y = e.pageY;
+            }
+            var tx = max_delta/(delta_x) ; 
+            var ty = max_delta/(delta_y) ;
+            var t = tx < ty ? tx : ty; 
+            // cons.innerHTML += e.pageX+'->'+last_x+','+ k+':'+tx + "|" + ty+ '}' + t + '<BR>';
+            paint({pageX:Math.floor((1-t)*e.pageX+t*last_x),pageY:Math.floor((1-t)*e.pageY+t*last_y)},k+1);
+        }
+        
+        var imgData2 = ctx.getImageData(x,y,rw,rw);
+        
+        for (var i = 0; i < rw; ++i){
+            for (var j = 0; j < rw; ++j){
+                var pix_index = (rw*i + j)*4;
+                var dist_from_center = Math.sqrt((j-rw/2)*(j-rw/2) + (i-rw/2)*(i-rw/2)); 
+                var f = dist_from_center > radius ? 0 : 1-dist_from_center/radius;
+                imgData2.data[pix_index] = (imgData2.data[pix_index]*(1-f)+r*f); //hm, is this how transparency works?
+                imgData2.data[pix_index+1] = (imgData2.data[pix_index+1]*(1-f)+g*f);
+                imgData2.data[pix_index+2] = (imgData2.data[pix_index+2]*(1-f)+b*f);
+                imgData2.data[pix_index+3] = 255;//transparent outside of radius   
+            }
+        }
+        ctx.putImageData(imgData2,x,y);
+        
+        last_x = e.pageX;
+        last_y = e.pageY; 
+    }
+    
+}
+</script>
+
+
+</head>
+<body onload='initial()'>
+  
+    <div class="mini" id="colorSetDiv"><canvas id="colorsCanvas" width="100" height="200"></canvas><input type=text value="0" size=3 id="r_val" title="red"></input>
+      <input type=text value="0" size=3 id="g_val"></input><input type=text value="0" size=3 id="b_val"><input type=text value="0" size=3 id="h_val"></input>
+      <input type=text value="0" size=3 id="s_val"></input><input type=text value="0" size=3 id="v_val"></input><BR>
+      <input type=text value="000000" size=10 id="hexColor"></input>size<input type=text value="30" size=3 id="brushSize"></input>
+    <button id="smallSize">small</button><button id="medSize">med</button><button id="largeSize">large</button></div>
+    <div class="mini2" id="mainDiv"><canvas id="myCanvas" width="800" height="400"></canvas></div>
+	<br />
+    <div id="cons"></div>
+
+</body>
+
+
+</html>
+
+
